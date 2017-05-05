@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<style>
+.floating-box {
+    float: left;
+    width: 200px;
+    height: 200px;
+    margin: 10px;
+    border: 3px solid #73AD21;  
+    border-radius:10px;
+    background-color: white;
+}
+
+.after-box {
+    clear: left;
+    border: 3px solid;      
+}
+
+#inner {
+  margin: 0 auto;
+}
+#div2{
+ padding: 5px;
+ margin: 10px;
+}
+.loader {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite;
+  animation: spin 2s linear infinite;
+}
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Add animation to "page content" */
+.animate-bottom {
+  position: relative;
+  -webkit-animation-name: animatebottom;
+  -webkit-animation-duration: 1s;
+  animation-name: animatebottom;
+  animation-duration: 1s
+}
+
+@-webkit-keyframes animatebottom {
+  from { bottom:-100px; opacity:0 } 
+  to { bottom:0px; opacity:1 }
+}
+
+@keyframes animatebottom { 
+  from{ bottom:-100px; opacity:0 } 
+  to{ bottom:0; opacity:1 }
+}
+</style>
+<body>
+<div ng-app="myApp" ng-controller="myCtrl">
+<div ng-hide="showcontent">
+<div class="loader"></div>
+</div>    
+<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12" ng-show="showcontent" style="background-color:white">
+    <div class="col-lg-12col-md-12 col-sm-12 col-xs-12">
+        <div class="text-left col-lg-4">
+           <a href="./index.html"> <img src="./images/logo.png"></a>
+        </div>
+        <div class="container text-left col-lg-8 col-md-8 col-sm-8 col-xs-8">
+            <h2 style="color: green">Games Arena </br>
+            <small style="color: grey">Get Your Games Here</small></h2>
+        </div>
+</div>
+<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12" style="background-image: url(./images/background1.jpg); background-repeat: repeat">
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12" style="background-color:#AAB7B8;border:2px solid">  
+                        </br><input list="serachList" class="form-control" id="search"  ng-model="query" type="text" placeholder="Search (by name)">
+                        <datalist id="serachList">
+                            <option ng-repeat="x1 in myWelcome" value="{{x1.title}}">
+                        </datalist>
+                        </br>
+</div>
+<div class="col-md-12" align="left" style="color: black">
+                <br/>
+                <input type="radio" name="sort" value="score" ng-click="sortBy('score')">&nbsp;Score
+                <span class="sortorder" ng-show="propertyName === 'score'" ng-class="{reverse: reverse}"></span>
+                &nbsp;<input type="radio" name="sort" value="platform" ng-click="sortBy('platform')">&nbsp;Platform
+                <span class="sortorder" ng-show="propertyName === 'platform'" ng-class="{reverse: reverse}"></span>
+&nbsp; (Single Click for Ascending/ Double Click For Descending)
+</br>
+</br>
+</div>
+
+
+<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center" style="display:block; margin:auto" ng-hide="x.title == 'test'">
+    <div class="floating-box" ng-repeat="x in myWelcome | filter:showsearch | orderBy:propertyName:reverse">
+        <h4>{{x.title}}
+            </br>
+            <small>{{x.platform}}</small>
+            </br>
+            <small ng-if="x.editors_choice == 'Y' "><img src="./images/star.png"></small>
+        </h4>
+        <hr>
+        <div>
+                <h5><b>Genre :</b> {{x.genre}}</h5>
+                <h4><b>{{x.score}}</b></h4>
+        </div>
+    </div>
+</div>
+<script>
+var app = angular.module('myApp', []);
+app.controller('myCtrl', function($scope, $http) {
+$scope.showcontent = false;
+  $http({
+    method : "GET",
+    url : "http://localhost:3000/api/games"
+  }).then(function mySucces(response) {
+      $scope.myWelcome = response.data;
+     $scope.totalItems = $scope.myWelcome.length;
+    //  $scope.myWelcome.shift();
+      console.log($scope.myWelcome);
+       console.log($scope.myWelcome[1].created_at);
+       $scope.showcontent = true;
+      
+    }, function myError(response) {
+      $scope.myWelcome = response.statusText;
+      
+  });
+
+$scope.showsearch = function (row) {
+            var query = angular.lowercase($scope.query);
+            return !!((angular.lowercase(row.title) != null && angular.lowercase(row.title).indexOf(query || '') !== -1));
+}
+
+$scope.sortBy = function(propertyName) {
+    $scope.reverse = ($scope.propertyName === propertyName) ? !$scope.reverse : false;
+    $scope.propertyName = propertyName;
+  };
+});
+</script>
+
+</body>
+</html>
